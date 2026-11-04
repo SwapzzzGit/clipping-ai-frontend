@@ -3,11 +3,26 @@ import { api, ago, clock, Job, Mode, uploadVideo } from "../api";
 import { ModeChip, ModeToggle, ProgressBar, StatusPill } from "../components/bits";
 import { usePolling } from "../hooks";
 import { Category, JobWithPublish, pub } from "../publishApi";
+import TrendingPage from "./TrendingPage";
 
 export default function JobsPage({ jobs }: { jobs: Job[] | null }) {
   const { data: cats } = usePolling<Category[]>(pub.categories, 15000);
+  const [tab, setTab] = useState<"current" | "trends">("current");
   const byId = Object.fromEntries((cats || []).map((c) => [c.id, c]));
+  const tabs = (
+    <div className="tabs main-tabs" role="tablist">
+      <button type="button" role="tab" aria-selected={tab === "current"} className={tab === "current" ? "on" : ""} onClick={() => setTab("current")}>
+        Current jobs{jobs && <span className="count">{jobs.length}</span>}
+      </button>
+      <button type="button" role="tab" aria-selected={tab === "trends"} className={tab === "trends" ? "on" : ""} onClick={() => setTab("trends")}>
+        Trends
+      </button>
+    </div>
+  );
+  if (tab === "trends") return <>{tabs}<TrendingPage /></>;
   return (
+    <>
+    {tabs}
     <div className="jobs-layout">
       <NewJob cats={cats || []} />
       <section className="joblist" aria-label="Jobs">
@@ -27,6 +42,7 @@ export default function JobsPage({ jobs }: { jobs: Job[] | null }) {
         )}
       </section>
     </div>
+    </>
   );
 }
 

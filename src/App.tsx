@@ -6,6 +6,7 @@ import JobPage from "./pages/JobPage";
 import SettingsPage from "./pages/SettingsPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import PostsPage from "./pages/PostsPage";
+import TrendingPage from "./pages/TrendingPage";
 
 // Tiny hash router: #/ (jobs), #/jobs/<id>, #/accounts, #/posts, #/settings
 function useRoute(): string[] {
@@ -81,6 +82,7 @@ function Studio() {
         <nav>
           <a href="#/" className={page === "" || page === "jobs" ? "on" : ""}>Jobs</a>
           <a href="#/accounts" className={page === "accounts" ? "on" : ""}>Accounts & categories</a>
+          <a href="#/trending" className={page === "trending" ? "on" : ""}>Trending</a>
           <a href="#/posts" className={page === "posts" ? "on" : ""}>Posts</a>
           <a href="#/settings" className={page === "settings" ? "on" : ""}>Settings</a>
         </nav>
@@ -101,6 +103,8 @@ function Studio() {
           <JobPage id={route[1]} />
         ) : page === "accounts" ? (
           <CategoriesPage />
+        ) : page === "trending" ? (
+          <TrendingPage />
         ) : page === "posts" ? (
           <PostsPage />
         ) : page === "settings" ? (

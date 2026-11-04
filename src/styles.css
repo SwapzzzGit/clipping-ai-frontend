@@ -303,3 +303,26 @@ details > summary { cursor: pointer; }
 .signin { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
 .signin form { width: min(100%, 360px); }
 .signin .brand { margin-bottom: 4px; }
+
+/* Trending page */
+.trend-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.trend-head .field { flex: 1 1 180px; }
+.trend-head .row-end { margin-left: auto; }
+.trend-bar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 12px; align-items: end; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 14px; }
+.trend-bar > b { align-self: center; }
+.trend-bar .trend-cat { flex: 0 1 220px; }
+.trend-jump { display: flex; flex-wrap: wrap; gap: 6px; }
+.trend-jump a { color: var(--fg); text-decoration: none; }
+.trend-group { display: grid; gap: 10px; scroll-margin-top: 90px; }
+.trend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+.vcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; display: grid; }
+.vcard.picked { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.vthumb { position: relative; display: block; aspect-ratio: 16 / 9; background: var(--surface-2); }
+.vthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vlen { position: absolute; right: 6px; bottom: 6px; background: rgba(0, 0, 0, 0.75); color: #fff; font: 500 11px var(--mono); padding: 1px 5px; border-radius: 4px; }
+.vbody { padding: 10px 12px 12px; display: grid; gap: 6px; align-content: start; }
+.vtitle { font-weight: 600; line-height: 1.3; color: var(--fg); text-decoration: none; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.vmeta { font-size: 12px; color: var(--muted); }
+.vact { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.vpick { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+.main-tabs { margin-bottom: 14px; font-size: 14px; }
