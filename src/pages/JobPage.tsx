@@ -51,11 +51,15 @@ export default function JobPage({ id }: { id: string }) {
           <h1>{v?.title || "Reading video…"}</h1>
           <div className="jr-meta">
             <StatusPill status={job.status} />
-            <ModeChip mode={job.mode} />
+            <ModeChip mode={job.mode} by={job.selection?.by} />
             {v?.channel && <span>{v.channel}</span>}
             {v?.duration ? <span>{clock(v.duration)}</span> : null}
-            {v && <span>{v.captions} captions{v.heatmap ? " · replay heatmap" : ""}</span>}
-            <a href={job.url} target="_blank" rel="noreferrer">Open on YouTube ↗</a>
+            {v && (v.captions === "none"
+              ? <span>No speech, so no captions</span>
+              : <span>{v.captions} captions{v.heatmap ? " · replay heatmap" : ""}</span>)}
+            {job.url.startsWith("upload:")
+              ? <span>Uploaded from this computer</span>
+              : <a href={job.url} target="_blank" rel="noreferrer">Open on YouTube ↗</a>}
           </div>
         </div>
         <div className="actions">
@@ -85,7 +89,9 @@ export default function JobPage({ id }: { id: string }) {
 
       {job.selection && (
         <p className="muted small">
-          Moments chosen by <b>{job.selection.by === "claude" ? "Claude" : job.selection.model}</b> {ago(job.selection.at)}
+          Moments chosen by{" "}
+          <b>{job.selection.by === "action" ? "the action in the picture and sound (no speech)"
+            : job.selection.by === "claude" ? "Claude" : job.selection.model}</b> {ago(job.selection.at)}
           {job.selection.usage ? ` · ${job.selection.usage.calls} LLM calls, ${(job.selection.usage.input_tokens / 1000).toFixed(0)}k tokens in` : ""}
           {job.clips.length > 0 && ` · ${approved}/${job.clips.length} approved`}
         </p>
@@ -215,9 +221,13 @@ function ClipCard({ job, clip, onSaved }: { job: Job; clip: Clip; onSaved: (j: J
           <h3>{clip.title}</h3>
         </div>
         <div className="jr-meta">
-          <a href={clip.source_url} target="_blank" rel="noreferrer" className="mono">
-            {clock(clip.start_sec)}–{clock(clip.end_sec)}
-          </a>
+          {clip.source_url ? (
+            <a href={clip.source_url} target="_blank" rel="noreferrer" className="mono">
+              {clock(clip.start_sec)}–{clock(clip.end_sec)}
+            </a>
+          ) : (
+            <span className="mono">{clock(clip.start_sec)}–{clock(clip.end_sec)}</span>
+          )}
           <span>{Math.round(clip.duration_sec)}s</span>
           {clip.heatmap >= 0.5 && <span className="chip hot">Most replayed</span>}
           {clip.reframe && <span title="Share of sampled frames with a face">faces {Math.round(clip.reframe.face_coverage * 100)}%</span>}

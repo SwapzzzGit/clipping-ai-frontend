@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { api, ago, clock, Job, Mode } from "../api";
+import { api, ago, clock, Job, Mode, uploadVideo } from "../api";
 import { ModeChip, ModeToggle, ProgressBar, StatusPill } from "../components/bits";
 import { usePolling } from "../hooks";
 import { Category, JobWithPublish, pub } from "../publishApi";
@@ -36,10 +36,10 @@ function JobRow({ job, cat }: { job: Job; cat?: Category }) {
     <a className="jobrow" href={`#/jobs/${job.id}`}>
       <div className="thumb">{v?.thumbnail ? <img src={v.thumbnail} alt="" loading="lazy" /> : <span>{job.id.slice(0, 4)}</span>}</div>
       <div className="jr-main">
-        <div className="jr-title">{v?.title || job.url}</div>
+        <div className="jr-title">{v?.title || (job.url.startsWith("upload:") ? "Uploaded video" : job.url)}</div>
         <div className="jr-meta">
           <StatusPill status={job.status} />
-          <ModeChip mode={job.mode} />
+          <ModeChip mode={job.mode} by={job.selection?.by} />
           {cat && <span className="chip catchip" style={{ ["--cat" as string]: cat.color }}>{cat.name}</span>}
           {v?.duration ? <span>{clock(v.duration)}</span> : null}
           <span>{job.options.num_clips} clips</span>
@@ -53,7 +53,9 @@ function JobRow({ job, cat }: { job: Job; cat?: Category }) {
 }
 
 function NewJob({ cats }: { cats: Category[] }) {
-  const [tab, setTab] = useState<"single" | "batch">("single");
+  const [tab, setTab] = useState<"single" | "file" | "batch">("single");
+  const [file, setFile] = useState<File | null>(null);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [url, setUrl] = useState("");
   const [batchText, setBatchText] = useState("");
   const [category, setCategory] = useState("");
@@ -86,8 +88,14 @@ function NewJob({ cats }: { cats: Category[] }) {
         if (!r.errors.length) setBatchText("");
         return;
       }
+      let source = url;
+      if (tab === "file") {
+        if (!file) throw new Error("Choose a video file first.");
+        setUploadPct(0);
+        source = (await uploadVideo(file, setUploadPct)).url;
+      }
       const job = await api.createJob({
-        url, mode, num_clips: numClips, min_sec: minSec, max_sec: maxSec, captions, language,
+        url: source, mode, num_clips: numClips, min_sec: minSec, max_sec: maxSec, captions, language,
         rules: useDefaultRules ? null : rules, category_id: category || null,
       });
       window.location.hash = `#/jobs/${job.id}`;
@@ -95,6 +103,7 @@ function NewJob({ cats }: { cats: Category[] }) {
       setErr((e2 as Error).message);
     } finally {
       setBusy(false);
+      setUploadPct(null);
     }
   }
 
@@ -104,6 +113,7 @@ function NewJob({ cats }: { cats: Category[] }) {
         <h2>New clip job</h2>
         <div className="tabs small" role="tablist">
           <button type="button" role="tab" aria-selected={tab === "single"} className={tab === "single" ? "on" : ""} onClick={() => setTab("single")}>One link</button>
+          <button type="button" role="tab" aria-selected={tab === "file"} className={tab === "file" ? "on" : ""} onClick={() => setTab("file")}>Upload from this PC</button>
           <button type="button" role="tab" aria-selected={tab === "batch"} className={tab === "batch" ? "on" : ""} onClick={() => setTab("batch")}>Batch</button>
         </div>
       </div>
@@ -112,6 +122,18 @@ function NewJob({ cats }: { cats: Category[] }) {
           <span>YouTube link</span>
           <input id="nj-url" type="url" required placeholder="https://www.youtube.com/watch?v=…" value={url}
             onChange={(e) => setUrl(e.target.value)} autoFocus />
+        </label>
+      ) : tab === "file" ? (
+        <label className="field">
+          <span>Video file on this computer (MP4, MOV, MKV, WebM, M4V or AVI)</span>
+          <input id="nj-file" type="file" accept="video/*,.mkv,.mov,.m4v,.webm,.avi"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          {file && <span className="small">{file.name} · {(file.size / 1024 ** 3).toFixed(2)} GB</span>}
+          {uploadPct !== null && (
+            <div className="upload-bar" role="progressbar" aria-valuenow={Math.round(uploadPct * 100)}>
+              <div style={{ width: `${Math.round(uploadPct * 100)}%` }} />
+            </div>
+          )}
         </label>
       ) : (
         <label className="field">
@@ -186,9 +208,18 @@ function NewJob({ cats }: { cats: Category[] }) {
           {batchResult.errors.length > 0 && <ul className="small">{batchResult.errors.map((e) => <li key={e}>{e}</li>)}</ul>}
         </div>
       )}
-      <button className="primary big" type="submit" disabled={busy || !(tab === "single" ? url.trim() : batchText.trim())}>
-        {busy ? "Starting…" : tab === "batch" ? "Queue all videos" : "Make clips"}
+      <button className="primary big" type="submit"
+        disabled={busy || !(tab === "single" ? url.trim() : tab === "file" ? file : batchText.trim())}>
+        {busy
+          ? uploadPct !== null ? `Uploading ${Math.round(uploadPct * 100)}%…` : "Starting…"
+          : tab === "batch" ? "Queue all videos" : "Make clips"}
       </button>
+      {tab === "file" && (
+        <p className="hint">
+          The file uploads to Clipper first, then it is transcribed here. If the video has no speech (gaming, music),
+          the clips are picked from the action on screen and in the sound instead.
+        </p>
+      )}
       <p className="hint">
         {mode === "claude"
           ? "After the transcript is read, Claude picks the moments. Everything else runs automatically."

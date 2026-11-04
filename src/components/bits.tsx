@@ -14,7 +14,8 @@ export function StatusPill({ status }: { status: string }) {
   return <span className={`pill s-${status}`}>{STATUS_LABEL[status] || status}</span>;
 }
 
-export function ModeChip({ mode }: { mode: Mode }) {
+export function ModeChip({ mode, by }: { mode: Mode; by?: string }) {
+  if (by === "action") return <span className="chip mode-api">Action picks</span>;
   return <span className={`chip mode-${mode}`}>{mode === "claude" ? "Claude picks" : "API key"}</span>;
 }
 
@@ -32,7 +33,9 @@ export function Stepper({ job }: { job: Job }) {
     <ol className="stepper" aria-label="Pipeline progress">
       {STEPS.map((s, i) => {
         const state = i < idx ? "done" : i === idx ? (failed ? "fail" : job.status === "awaiting_claude" ? "wait" : "now") : "todo";
-        const label = s.id === "selection" ? (job.mode === "claude" ? "Claude chooses" : "LLM chooses") : s.label;
+        const label = s.id !== "selection" ? s.label
+          : job.selection?.by === "action" ? "Action chooses"
+          : job.mode === "claude" ? "Claude chooses" : "LLM chooses";
         return (
           <li key={s.id} className={state}>
             <span className="num">{state === "done" ? "✓" : i + 1}</span>

@@ -295,6 +295,10 @@ details > summary { cursor: pointer; }
 .credform button { justify-self: start; }
 @media (max-width: 700px) { .credform { grid-template-columns: minmax(0, 1fr); } }
 
+/* upload progress for a video from this computer */
+.upload-bar { height: 8px; margin-top: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.upload-bar > div { height: 100%; background: var(--accent, #7c5cff); transition: width 0.2s linear; }
+
 /* sign-in (deployed servers with APP_PASSWORD) */
 .signin { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
 .signin form { width: min(100%, 360px); }

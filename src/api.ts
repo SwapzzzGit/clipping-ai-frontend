@@ -78,6 +78,31 @@ export interface SystemInfo {
 
 export class ApiError extends Error {}
 
+export interface UploadedVideo { id: string; name: string; size: number; url: string }
+
+// Sends the file as the raw request body (no form encoding) and reports progress as bytes leave the browser.
+export function uploadVideo(file: File, onProgress: (fraction: number) => void): Promise<UploadedVideo> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `/api/uploads?name=${encodeURIComponent(file.name)}`);
+    xhr.setRequestHeader("content-type", "application/octet-stream");
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(e.loaded / e.total);
+    };
+    xhr.onload = () => {
+      if (xhr.status === 201) return resolve(JSON.parse(xhr.responseText));
+      let msg = `Upload failed (${xhr.status})`;
+      try {
+        const d = JSON.parse(xhr.responseText).detail;
+        if (typeof d === "string") msg = d;
+      } catch { /* keep the status message */ }
+      reject(new ApiError(msg));
+    };
+    xhr.onerror = () => reject(new ApiError("Upload failed: the connection was lost."));
+    xhr.send(file);
+  });
+}
+
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...init,
